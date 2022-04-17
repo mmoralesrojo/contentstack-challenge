@@ -5,7 +5,8 @@ const fetch = require('node-fetch');
 
 module.exports = {
   getPlanets: (req, res) => {
-    const name = req.query.name;
+    console.log(`Controller: getPlanets`);
+    const name = req.query.name ? req.query.name : '';
     const filter = { ...(name && { name: { $regex: new RegExp(`.*${name}.*`), $options: 'i' } }) };
     Planet.find(filter).exec(async (err, data) => {
       if (err) {
@@ -27,9 +28,9 @@ module.exports = {
           }
           return next ? await getSwapiPlanets(results, next) : results;
         }
-        const swapiPlanetService = `https://swapi.py4e.com/api/planets?search=${name}`
+        const swapiPlanetService = `https://swapi.py4e.com/api/planets?search=${name}`;
         swapiResults = await getSwapiPlanets([], swapiPlanetService);
-        forEach(swapiResults, (record) => {
+        forEach(swapiResults, async (record) => {
           const newFilter = { name: record.name };
           const planetObject = {
             name: record.name,
@@ -43,21 +44,41 @@ module.exports = {
             surface_water: record.surface_water
           };
           const newPlanet = new Planet(planetObject);
-          data.push(planetObject);
-          Planet.findOneAndUpdate(newFilter, newPlanet, {
+          data.push(newPlanet);
+          await Planet.findOneAndUpdate(newFilter, newPlanet, {
             upsert: true,
             new: true
-          }, (err) => {
-            if (err) console.log(`Error saving new Planet: ${err.message}`);
-          });
+          }).exec();
         });
       }
-      return res.json({
-        data
-      })
+      return res.json(
+        {
+          data: data.map((row) => {
+            const realRow = row.toObject();
+            const newRow = { id: realRow._id, ...realRow };
+            delete newRow._id;
+            return newRow;
+          })
+        }
+      );
     });
   },
   savePlanet: (req, res) => {
-    
+    console.log(`Controller: savePlanet`);
+    const { name, diameter, rotation_period, orbital_period, gravity, population, climate, terrain, surface_water } = req.body;
+
+    if (!name) {
+      return res.status(400).json({
+        error: 'You must specify at least the name of the planet'
+      });
+    }
+
+    const planetObject = {
+      name, diameter, rotation_period, orbital_period, gravity, population, climate, terrain, surface_water
+    };
+    Planet.create(planetObject, (err) => {
+      if (err) return res.status(400).json({ error: `There was an error saving the planet: ${err.message}` });
+      return res.json(planetObject);
+    });
   }
 }
