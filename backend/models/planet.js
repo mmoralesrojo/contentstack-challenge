@@ -29,6 +29,9 @@ const planetSchema = new Schema({
   },
   surface_water: {
     type: String
+  },
+  url: {
+    type: String
   }
 });
 

@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import PlanetForm from './PlanetForm';
 import { useParams, useNavigate } from 'react-router-dom';
 import PlanetsContext from '../context/PlanetsContext';
+import config from '../config/config.json';
 
 const EditPlanet = () => {
   const { planets, setPlanets } = useContext(PlanetsContext);
@@ -10,8 +11,23 @@ const EditPlanet = () => {
   const navigate = useNavigate();
 
   const handleOnSubmit = (planet) => {
-    const filteredPlanets = planets.filter((planet) => planet.id !== id);
-    setPlanets([...filteredPlanets, planet]);
+    fetch(`${config.SERVER_URL}/planet/${id}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({...planet})
+      })
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        }
+        throw response;
+      })
+      .catch((error) => {
+        console.error('Error saving data', error);
+      });
     navigate('/');
   };
 

@@ -1,6 +1,5 @@
 import React, { useState, useContext } from 'react';
 import { Form, Button } from 'react-bootstrap';
-import { v4 as uuidv4 } from 'uuid';
 import _ from 'lodash';
 import PlanetsContext from '../context/PlanetsContext';
 
@@ -20,16 +19,15 @@ const PlanetForm = (props) => {
   const handleOnSubmit = (event) => {
     event.preventDefault();
     let errorMsg = '';
-    const allFieldsFilled = planetProperties.every((field) => field.isFormRequired && !!(_.get(planet, field.name).trim()));
+    const allFieldsFilled = planetProperties.every((field) => !field.isFormRequired || !!(_.get(planet, field.name).trim()));
 
     if (allFieldsFilled) {
-      const planet = {
-        id: uuidv4(),
+      const planetForm = {
         ...(planetProperties.reduce((prev, curr) => ({
-          ...prev, [curr]: _.get(planet, curr.name)
+          ...prev, [curr.name]: _.get(planet, curr.name)
         }), {}))
       };
-      props.handleOnSubmit(planet);
+      props.handleOnSubmit(planetForm);
     } else {
       errorMsg = 'Please fill out all the fields';
     }
@@ -53,16 +51,16 @@ const PlanetForm = (props) => {
       <Form onSubmit={handleOnSubmit}>
         {planetProperties.map((item) => {
           return (
-          <Form.Group controlId={item.name} key={item.name}>
-            <Form.Label>{item.label}</Form.Label>
-            <Form.Control
-              className='input-control'
-              type={item.type}
-              name={item.name}
-              value={_.get(planet, item.name)}
-              placeholder={item.placeholder}
-              onChange={handleInputChange} />
-          </Form.Group>)
+            <Form.Group controlId={item.name} key={item.name}>
+              <Form.Label>{item.label}</Form.Label>
+              <Form.Control
+                className='input-control'
+                type={item.type}
+                name={item.name}
+                value={_.get(planet, item.name)}
+                placeholder={item.placeholder}
+                onChange={handleInputChange} />
+            </Form.Group>)
         })}
         <Button variant='primary' type='submit' className='submit-btn'>
           Submit

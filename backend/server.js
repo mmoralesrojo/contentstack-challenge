@@ -16,6 +16,8 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use('/', routes);
 
+mongoose.set('debug', true);
+
 mongoose
   .connect(databaseConfig.stringConnection, {
     useNewUrlParser: true
